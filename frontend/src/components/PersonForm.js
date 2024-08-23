@@ -1,113 +1,127 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Button, TextField, Typography, Grid, Box } from "@mui/material";
 import api from "../api";
 
 const PersonForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [excelFile, setExcelFile] = useState(null);
+  const [person, setPerson] = useState({ name: "", phoneNumber: "" });
+  const [file, setFile] = useState(null);
 
   useEffect(() => {
     if (id) {
-      const fetchPerson = async () => {
-        try {
-          const response = await api.get(`/persons/${id}`);
-          const person = response.data;
-          setName(person.Name);
-          setPhoneNumber(person.PhoneNumber);
-        } catch (error) {
-          console.error("Error fetching person:", error);
-        }
-      };
-
-      fetchPerson();
+      api.get(`/persons/${id}`).then((response) => {
+        setPerson(response.data);
+      });
     }
   }, [id]);
 
-  const handleFileChange = (e) => {
-    setExcelFile(e.target.files[0]);
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setPerson({ ...person, [name]: value });
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const handleFileChange = (event) => {
+    setFile(event.target.files[0]);
+  };
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
     try {
-      const personData = { name, phoneNumber };
+      let response;
 
+      // Step 1: Create or update the person
       if (id) {
-        // Update existing person
-        const response = await api.put(`/persons/${id}`, personData);
-        console.log("Update Response:", response.data); // Log the response for debugging
-
-        if (excelFile) {
-          const formData = new FormData();
-          formData.append("file", excelFile);
-          await api.post(`/import/${id}`, formData);
-        }
+        response = await api.put(`/persons/${id}`, {
+          name: person.name,
+          phoneNumber: person.phoneNumber,
+        });
       } else {
-        // Create new person
-        const response = await api.post("/persons", personData);
-        const newPerson = response.data;
-
-        if (excelFile) {
-          const formData = new FormData();
-          formData.append("file", excelFile);
-          await api.post(`/import/${newPerson.PersonID}`, formData);
-        }
+        response = await api.post("/persons", {
+          name: person.name,
+          phoneNumber: person.phoneNumber,
+        });
       }
+
+      const personID = id || response.data.PersonID;
+
+      // Step 2: Upload the Excel file, if it exists
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        await api.post(`/import/${personID}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+
+      console.log("Person created/updated and file uploaded successfully");
       navigate("/");
     } catch (error) {
-      console.error("Error saving person:", error);
+      console.error("Error saving person or uploading file:", error);
     }
   };
 
   const onDelete = async () => {
     try {
-      if (id) {
-        const response = await api.delete(`/persons/${id}`);
-        console.log("Delete Response:", response); // Log the response for debugging
-        navigate("/");
-      }
+      await api.delete(`/persons/${id}`);
+      navigate("/");
     } catch (error) {
       console.error("Error deleting person:", error);
     }
   };
 
   return (
-    <div>
-      <h2>{id ? "Edit Person" : "Add Person"}</h2>
-      <form onSubmit={onSubmit}>
-        <div>
-          <label>Name:</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+    <Box component="form" onSubmit={onSubmit}>
+      <Typography variant="h6">
+        {id ? "Update Person" : "Add New Person"}
+      </Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Name"
+            name="name"
+            value={person.name}
+            onChange={handleInputChange}
             required
           />
-        </div>
-        <div>
-          <label>Phone Number:</label>
-          <input
-            type="text"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Phone Number"
+            name="phoneNumber"
+            value={person.phoneNumber}
+            onChange={handleInputChange}
             required
           />
-        </div>
-        <div>
-          <label>Upload Excel File:</label>
-          <input type="file" onChange={handleFileChange} />
-        </div>
-        <button type="submit">{id ? "Update" : "Add"}</button>
-        {id && (
-          <button type="button" onClick={onDelete}>
-            Delete
-          </button>
-        )}
-      </form>
-    </div>
+        </Grid>
+        <Grid item xs={12}>
+          <Button variant="contained" component="label">
+            Upload Excel File (Optional)
+            <input type="file" hidden onChange={handleFileChange} />
+          </Button>
+          {file && <Typography variant="body2">File: {file.name}</Typography>}
+        </Grid>
+        <Grid item xs={12}>
+          <Button type="submit" variant="contained" color="primary">
+            {id ? "Update" : "Add"}
+          </Button>
+          {id && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={onDelete}
+              style={{ marginLeft: "10px" }}
+            >
+              Delete
+            </Button>
+          )}
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

@@ -1,8 +1,8 @@
 const express = require("express");
 const path = require("path");
-const xlsx = require("xlsx");
 const fs = require("fs");
-const uploadExcel = require("../uploadExcel");
+const multer = require("multer");
+const xlsx = require("xlsx");
 const a_temp = require("../models/a_temp");
 const z_temp = require("../models/z_temp");
 const k_temp = require("../models/k_temp");
@@ -10,6 +10,19 @@ const Person = require("../models/Person");
 
 const router = express.Router();
 
+// Configure multer for file upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// Function to process Excel file and save data to the database
 const processExcel = async (filePath, Model, PersonID) => {
   const workbook = xlsx.readFile(filePath);
   const sheetName = workbook.SheetNames[0];
@@ -17,21 +30,15 @@ const processExcel = async (filePath, Model, PersonID) => {
   const rows = xlsx.utils.sheet_to_json(sheet);
 
   for (const row of rows) {
-    row.PersonID = PersonID;
+    row.PersonID = PersonID; // Link each row to the PersonID
     await Model.create(row);
   }
 
-  fs.unlinkSync(filePath);
+  fs.unlinkSync(filePath); // Delete the file after processing
 };
 
-const detectTemplate = (headers) => {
-  if (headers.includes("E_REPORT")) return "a_temp";
-  if (headers.includes("Date")) return "z_temp";
-  if (headers.includes("DATETIME")) return "k_temp";
-  return null;
-};
-
-router.post("/:personID", uploadExcel.single("file"), async (req, res) => {
+// Endpoint to handle Excel file upload and data import
+router.post("/import/:personID", upload.single("file"), async (req, res) => {
   try {
     const { personID } = req.params;
     const person = await Person.findByPk(personID);
@@ -40,47 +47,27 @@ router.post("/:personID", uploadExcel.single("file"), async (req, res) => {
       return res.status(400).json({ error: "Person not found" });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
     const filePath = path.join(__dirname, "../", req.file.path);
+
+    // Determine the correct model based on the Excel file headers
     const workbook = xlsx.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const headers = xlsx.utils.sheet_to_json(sheet, { header: 1 })[0];
+    const headers = Object.keys(
+      xlsx.utils.sheet_to_json(sheet, { header: 1 })[0]
+    );
 
-    const detectedTemplate = detectTemplate(headers);
-
-    if (!detectedTemplate) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Unknown template type. Please ensure the Excel file matches one of the known templates.",
-        });
+    if (headers.includes("E_REPORT") && headers.includes("CALLER_NUMBER")) {
+      await processExcel(filePath, a_temp, personID);
+    } else if (headers.includes("Date") && headers.includes("CALL_TYPE")) {
+      await processExcel(filePath, z_temp, personID);
+    } else if (headers.includes("DATETIME") && headers.includes("CALL_TYPE")) {
+      await processExcel(filePath, k_temp, personID);
+    } else {
+      return res.status(400).json({ error: "Unknown Excel template" });
     }
 
-    let Model;
-    switch (detectedTemplate) {
-      case "a_temp":
-        Model = a_temp;
-        break;
-      case "z_temp":
-        Model = z_temp;
-        break;
-      case "k_temp":
-        Model = k_temp;
-        break;
-      default:
-        return res.status(400).json({ error: "Invalid template detected." });
-    }
-
-    await processExcel(filePath, Model, personID);
-
-    res
-      .status(200)
-      .json({ message: `Data imported successfully to ${detectedTemplate}.` });
+    res.status(200).json({ message: "Data imported successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
