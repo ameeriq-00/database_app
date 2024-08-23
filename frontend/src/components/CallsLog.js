@@ -28,7 +28,7 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
-const CallsLog = () => {
+const CallsLog = ({ personID }) => {
   const [value, setValue] = useState(0);
   const [aTempData, setATempData] = useState([]);
   const [zTempData, setZTempData] = useState([]);
@@ -37,44 +37,35 @@ const CallsLog = () => {
   useEffect(() => {
     const fetchATempData = async () => {
       try {
-        const response = await api.get("/a_temp");
+        const response = await api.get(`/a_temp?PersonID=${personID}`);
         setATempData(response.data);
       } catch (error) {
-        console.error(
-          "Error fetching a_temp data:",
-          error.response || error.message
-        );
+        console.error("Error fetching a_temp data:", error);
       }
     };
 
     const fetchZTempData = async () => {
       try {
-        const response = await api.get("/z_temp");
+        const response = await api.get(`/z_temp?PersonID=${personID}`);
         setZTempData(response.data);
       } catch (error) {
-        console.error(
-          "Error fetching z_temp data:",
-          error.response || error.message
-        );
+        console.error("Error fetching z_temp data:", error);
       }
     };
 
     const fetchKTempData = async () => {
       try {
-        const response = await api.get("/k_temp");
+        const response = await api.get(`/k_temp?PersonID=${personID}`);
         setKTempData(response.data);
       } catch (error) {
-        console.error(
-          "Error fetching k_temp data:",
-          error.response || error.message
-        );
+        console.error("Error fetching k_temp data:", error);
       }
     };
 
     fetchATempData();
     fetchZTempData();
     fetchKTempData();
-  }, []);
+  }, [personID]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -114,32 +105,24 @@ const CallsLog = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {aTempData.length > 0 ? (
-                aTempData.map((item) => (
-                  <TableRow key={item.LogID}>
-                    <TableCell>{item.E_REPORT}</TableCell>
-                    <TableCell>{item.CALLER_NUMBER}</TableCell>
-                    <TableCell>{item.CALLED_NUMBER}</TableCell>
-                    <TableCell>{item.THIRD_PARTY_NUMBER}</TableCell>
-                    <TableCell>{item.CALL_INITIAL_TIME}</TableCell>
-                    <TableCell>{item.CONVERSATION_DURATION}</TableCell>
-                    <TableCell>{item.CITY}</TableCell>
-                    <TableCell>{item.SITE_NAME}</TableCell>
-                    <TableCell>{item.CHARGED_MOBILE_USER_IMEI}</TableCell>
-                    <TableCell>{item.CHARGED_MOBILE_USER_IMSI}</TableCell>
-                    <TableCell>{item.LON}</TableCell>
-                    <TableCell>{item.LAT}</TableCell>
-                    <TableCell>{item.SITE_ID}</TableCell>
-                    <TableCell>{item.CGI}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={14} align="center">
-                    No data available
-                  </TableCell>
+              {aTempData.map((item) => (
+                <TableRow key={item.LogID}>
+                  <TableCell>{item.E_REPORT}</TableCell>
+                  <TableCell>{item.CALLER_NUMBER}</TableCell>
+                  <TableCell>{item.CALLED_NUMBER}</TableCell>
+                  <TableCell>{item.THIRD_PARTY_NUMBER}</TableCell>
+                  <TableCell>{item.CALL_INITIAL_TIME}</TableCell>
+                  <TableCell>{item.CONVERSATION_DURATION}</TableCell>
+                  <TableCell>{item.CITY}</TableCell>
+                  <TableCell>{item.SITE_NAME}</TableCell>
+                  <TableCell>{item.CHARGED_MOBILE_USER_IMEI}</TableCell>
+                  <TableCell>{item.CHARGED_MOBILE_USER_IMSI}</TableCell>
+                  <TableCell>{item.LON}</TableCell>
+                  <TableCell>{item.LAT}</TableCell>
+                  <TableCell>{item.SITE_ID}</TableCell>
+                  <TableCell>{item.CGI}</TableCell>
                 </TableRow>
-              )}
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -161,26 +144,18 @@ const CallsLog = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {zTempData.length > 0 ? (
-                zTempData.map((item) => (
-                  <TableRow key={item.LogID}>
-                    <TableCell>{item.Date}</TableCell>
-                    <TableCell>{item.CALL_TYPE}</TableCell>
-                    <TableCell>{item.Duration}</TableCell>
-                    <TableCell>{item.CallingNumber}</TableCell>
-                    <TableCell>{item.CalledNumber}</TableCell>
-                    <TableCell>{item.CallLocation}</TableCell>
-                    <TableCell>{item.SiteID}</TableCell>
-                    <TableCell>{item.Split}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    No data available
-                  </TableCell>
+              {zTempData.map((item) => (
+                <TableRow key={item.LogID}>
+                  <TableCell>{item.Date}</TableCell>
+                  <TableCell>{item.CALL_TYPE}</TableCell>
+                  <TableCell>{item.Duration}</TableCell>
+                  <TableCell>{item.CallingNumber}</TableCell>
+                  <TableCell>{item.CalledNumber}</TableCell>
+                  <TableCell>{item.CallLocation}</TableCell>
+                  <TableCell>{item.SiteID}</TableCell>
+                  <TableCell>{item.Split}</TableCell>
                 </TableRow>
-              )}
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -209,33 +184,25 @@ const CallsLog = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {kTempData.length > 0 ? (
-                kTempData.map((item) => (
-                  <TableRow key={item.LogID}>
-                    <TableCell>{item.DATETIME}</TableCell>
-                    <TableCell>{item.CALL_TYPE}</TableCell>
-                    <TableCell>{item.MSISDN}</TableCell>
-                    <TableCell>{item.IMSI}</TableCell>
-                    <TableCell>{item.B_PARTY_MSISDN}</TableCell>
-                    <TableCell>{item.DURATION}</TableCell>
-                    <TableCell>{item.CALLINGNUMBER}</TableCell>
-                    <TableCell>{item.CALLEDNUMBER}</TableCell>
-                    <TableCell>{item.IMEI}</TableCell>
-                    <TableCell>{item.CALLLOCATION}</TableCell>
-                    <TableCell>{item.SITE_ID}</TableCell>
-                    <TableCell>{item.SITE}</TableCell>
-                    <TableCell>{item.GOVERNORATE}</TableCell>
-                    <TableCell>{item.LONGITUDE}</TableCell>
-                    <TableCell>{item.LATITUDE}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={15} align="center">
-                    No data available
-                  </TableCell>
+              {kTempData.map((item) => (
+                <TableRow key={item.LogID}>
+                  <TableCell>{item.DATETIME}</TableCell>
+                  <TableCell>{item.CALL_TYPE}</TableCell>
+                  <TableCell>{item.MSISDN}</TableCell>
+                  <TableCell>{item.IMSI}</TableCell>
+                  <TableCell>{item.B_PARTY_MSISDN}</TableCell>
+                  <TableCell>{item.DURATION}</TableCell>
+                  <TableCell>{item.CALLINGNUMBER}</TableCell>
+                  <TableCell>{item.CALLEDNUMBER}</TableCell>
+                  <TableCell>{item.IMEI}</TableCell>
+                  <TableCell>{item.CALLLOCATION}</TableCell>
+                  <TableCell>{item.SITE_ID}</TableCell>
+                  <TableCell>{item.SITE}</TableCell>
+                  <TableCell>{item.GOVERNORATE}</TableCell>
+                  <TableCell>{item.LONGITUDE}</TableCell>
+                  <TableCell>{item.LATITUDE}</TableCell>
                 </TableRow>
-              )}
+              ))}
             </TableBody>
           </Table>
         </TableContainer>

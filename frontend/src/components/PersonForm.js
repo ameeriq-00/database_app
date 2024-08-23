@@ -1,72 +1,110 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import api from "../api";
 
 const PersonForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [file, setFile] = useState(null);
+  const [excelFile, setExcelFile] = useState(null);
+
+  useEffect(() => {
+    if (id) {
+      const fetchPerson = async () => {
+        try {
+          const response = await api.get(`/persons/${id}`);
+          const person = response.data;
+          setName(person.Name);
+          setPhoneNumber(person.PhoneNumber);
+        } catch (error) {
+          console.error("Error fetching person:", error);
+        }
+      };
+
+      fetchPerson();
+    }
+  }, [id]);
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    setExcelFile(e.target.files[0]);
   };
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      // First, create the person
-      const personResponse = await axios.post(
-        `http://localhost:3000/api/persons`,
-        { Name: name, PhoneNumber: phoneNumber }
-      );
+      const personData = { name, phoneNumber };
 
-      const personID = personResponse.data.PersonID;
-      console.log("Person created successfully with ID:", personID);
+      if (id) {
+        // Update existing person
+        await api.put(`/persons/${id}`, personData);
+        if (excelFile) {
+          const formData = new FormData();
+          formData.append("file", excelFile);
+          await api.post(`/import/${id}`, formData);
+        }
+      } else {
+        // Create new person
+        const response = await api.post("/persons", personData);
+        const newPerson = response.data;
 
-      if (file) {
-        // Then, upload the file linked to the created person
-        const formData = new FormData();
-        formData.append("file", file);
+        if (excelFile) {
+          const formData = new FormData();
+          formData.append("file", excelFile);
+          await api.post(`/import/${newPerson.PersonID}`, formData);
+        }
+      }
+      navigate("/");
+    } catch (error) {
+      console.error("Error saving person:", error);
+    }
+  };
 
-        const fileResponse = await axios.post(
-          `http://localhost:3000/api/import/${personID}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        console.log("File uploaded successfully:", fileResponse.data);
+  const onDelete = async () => {
+    try {
+      if (id) {
+        await api.delete(`/persons/${id}`);
+        navigate("/");
       }
     } catch (error) {
-      console.error(
-        "Error creating person or uploading file:",
-        error.response?.data || error.message
-      );
+      console.error("Error deleting person:", error);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />
-      <input
-        type="text"
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
-        required
-      />
-      <input type="file" onChange={handleFileChange} />
-      <button type="submit">Create Person</button>
-    </form>
+    <div>
+      <h2>{id ? "Edit Person" : "Add Person"}</h2>
+      <form onSubmit={onSubmit}>
+        <div>
+          <label>Name:</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Phone Number:</label>
+          <input
+            type="text"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Upload Excel File:</label>
+          <input type="file" onChange={handleFileChange} />
+        </div>
+        <button type="submit">{id ? "Update" : "Add"}</button>
+        {id && (
+          <button type="button" onClick={onDelete}>
+            Delete
+          </button>
+        )}
+      </form>
+    </div>
   );
 };
 
