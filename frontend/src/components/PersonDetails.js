@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Paper, Typography, Button } from "@mui/material";
 import api from "../api";
+import CallsLog from "./CallsLog"; // Reuse the CallsLog component with its internal tabs
 
 const PersonDetails = () => {
   const { id } = useParams();
@@ -20,23 +20,17 @@ const PersonDetails = () => {
     fetchPerson();
   }, [id]);
 
-  if (!person) {
-    return <Typography>Loading...</Typography>;
-  }
+  if (!person) return <div>Loading...</div>;
 
   return (
-    <Paper style={{ padding: "1rem", marginTop: "2rem" }}>
-      <Typography variant="h4">{person.Name}</Typography>
-      <Typography variant="body1">
-        Phone Number: {person.PhoneNumber}
-      </Typography>
-      <Typography variant="body1">
-        Created Date: {new Date(person.CreatedDate).toLocaleString()}
-      </Typography>
-      <Button variant="contained" color="primary" style={{ marginTop: "1rem" }}>
-        Edit Person
-      </Button>
-    </Paper>
+    <div>
+      <h2>
+        {person.Name} ({person.PhoneNumber})
+      </h2>
+
+      {/* CallsLog component already contains the tabs, so just include it here */}
+      <CallsLog personID={id} />
+    </div>
   );
 };
 
