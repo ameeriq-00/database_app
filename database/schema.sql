@@ -1,4 +1,4 @@
--- Persons Table
+-- Create Persons Table
 CREATE TABLE Persons (
     PersonID INTEGER PRIMARY KEY AUTOINCREMENT,
     Name TEXT NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE Persons (
     CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Call Logs Table a_temp
+-- Create a_temp Table with ON DELETE CASCADE
 CREATE TABLE a_temp (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     PersonID INTEGER,
@@ -27,7 +27,7 @@ CREATE TABLE a_temp (
     FOREIGN KEY (PersonID) REFERENCES Persons(PersonID) ON DELETE CASCADE
 );
 
--- Call Logs Table z_temp
+-- Create z_temp Table with ON DELETE CASCADE
 CREATE TABLE z_temp (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     PersonID INTEGER,
@@ -42,7 +42,7 @@ CREATE TABLE z_temp (
     FOREIGN KEY (PersonID) REFERENCES Persons(PersonID) ON DELETE CASCADE
 );
 
--- Call Logs Table k_temp
+-- Create k_temp Table with ON DELETE CASCADE
 CREATE TABLE k_temp (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     PersonID INTEGER,
@@ -64,7 +64,7 @@ CREATE TABLE k_temp (
     FOREIGN KEY (PersonID) REFERENCES Persons(PersonID) ON DELETE CASCADE
 );
 
--- Archive Table
+-- Create Archive Table
 CREATE TABLE Archive (
     T INTEGER PRIMARY KEY AUTOINCREMENT,
     phone_number TEXT,
@@ -80,7 +80,7 @@ CREATE TABLE Archive (
     app_kind TEXT
 );
 
--- Dispatch Table
+-- Create Dispatch Table
 CREATE TABLE Dispatch (
     T INTEGER PRIMARY KEY AUTOINCREMENT,
     Name_accused TEXT,

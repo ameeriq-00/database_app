@@ -37,7 +37,9 @@ const PersonForm = () => {
 
       if (id) {
         // Update existing person
-        await api.put(`/persons/${id}`, personData);
+        const response = await api.put(`/persons/${id}`, personData);
+        console.log("Update Response:", response.data); // Log the response for debugging
+
         if (excelFile) {
           const formData = new FormData();
           formData.append("file", excelFile);
@@ -63,7 +65,8 @@ const PersonForm = () => {
   const onDelete = async () => {
     try {
       if (id) {
-        await api.delete(`/persons/${id}`);
+        const response = await api.delete(`/persons/${id}`);
+        console.log("Delete Response:", response); // Log the response for debugging
         navigate("/");
       }
     } catch (error) {
